@@ -2245,6 +2245,8 @@ static bool dw_dp_video_need_vsc_sdp(struct dw_dp *dp)
 static int dw_dp_video_set_msa(struct dw_dp *dp, u8 color_format, u8 bpc,
 			       u16 vstart, u16 hstart)
 {
+	struct dw_dp_video *video = &dp->video;
+	struct drm_display_mode *mode = &video->mode;
 	u16 misc = 0;
 
 	if (dw_dp_video_need_vsc_sdp(dp))
@@ -2285,6 +2287,9 @@ static int dw_dp_video_set_msa(struct dw_dp *dp, u8 color_format, u8 bpc,
 	default:
 		return -EINVAL;
 	}
+
+	if ((mode->flags & DRM_MODE_FLAG_INTERLACE) && !(mode->vtotal % 2))
+		misc |= DP_MSA_MISC_INTERLACE_VTOTAL_EVEN;
 
 	regmap_write(dp->regmap, DPTX_VIDEO_MSA1,
 		     FIELD_PREP(VSTART, vstart) | FIELD_PREP(HSTART, hstart));
@@ -2836,6 +2841,9 @@ dw_dp_bridge_mode_valid(struct drm_bridge *bridge,
 	if (!dw_dp_bandwidth_ok(dp, &m, min_bpp, link->lanes, link->rate))
 		return MODE_CLOCK_HIGH;
 
+	if (m.flags & DRM_MODE_FLAG_DBLCLK)
+		return MODE_H_ILLEGAL;
+
 	return MODE_OK;
 }
 
@@ -2952,6 +2960,7 @@ static int dw_dp_connector_init(struct dw_dp *dp)
 		connector->polled = DRM_CONNECTOR_POLL_CONNECT |
 				    DRM_CONNECTOR_POLL_DISCONNECT;
 	connector->ycbcr_420_allowed = true;
+	connector->interlace_allowed = true;
 
 	ret = drm_connector_init(bridge->dev, connector,
 				 &dw_dp_connector_funcs,
@@ -3112,6 +3121,13 @@ static void dw_dp_bridge_atomic_pre_enable(struct drm_bridge *bridge,
 	struct drm_display_mode *m = &video->mode;
 
 	drm_mode_copy(m, &crtc_state->adjusted_mode);
+
+	if (m->flags & DRM_MODE_FLAG_INTERLACE) {
+		m->vdisplay /= 2;
+		m->vsync_end /= 2;
+		m->vsync_start /= 2;
+		m->vtotal /= 2;
+	}
 
 	if (dp->split_mode)
 		drm_mode_convert_to_origin_mode(m);
