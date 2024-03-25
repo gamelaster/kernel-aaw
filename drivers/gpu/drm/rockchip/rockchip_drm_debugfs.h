@@ -9,16 +9,6 @@
 
 struct vop_dump_info;
 
-/**
- * struct vop_dump_list - store all buffer info per frame
- *
- * one frame maybe multiple buffer, all will be stored here.
- *
- */
-struct vop_dump_list {
-	struct list_head entry;
-};
-
 enum vop_dump_status {
 	DUMP_DISABLE = 0,
 	DUMP_KEEP
