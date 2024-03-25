@@ -182,7 +182,6 @@ struct vop_plane_state {
 	unsigned long offset;
 	int pdaf_data_type;
 	bool async_commit;
-	struct vop_dump_list *planlist;
 };
 
 struct vop_win {
@@ -1878,10 +1877,6 @@ static void vop_plane_atomic_disable(struct drm_plane *plane,
 {
 	struct vop_win *win = to_vop_win(plane);
 	struct vop *vop = to_vop(old_state->crtc);
-#if defined(CONFIG_ROCKCHIP_DRM_DEBUG)
-	struct vop_plane_state *vop_plane_state =
-					to_vop_plane_state(plane->state);
-#endif
 
 	if (!old_state->crtc)
 		return;
@@ -1901,11 +1896,6 @@ static void vop_plane_atomic_disable(struct drm_plane *plane,
 	if (VOP_MAJOR(vop->version) == 2 && VOP_MINOR(vop->version) == 5 &&
 	    win->win_id == 2)
 		VOP_WIN_SET(vop, win, yrgb_mst, 0);
-
-#if defined(CONFIG_ROCKCHIP_DRM_DEBUG)
-	kfree(vop_plane_state->planlist);
-	vop_plane_state->planlist = NULL;
-#endif
 
 	spin_unlock(&vop->reg_lock);
 }
@@ -1996,28 +1986,6 @@ static void vop_plane_atomic_update(struct drm_plane *plane,
 	bool rb_swap, global_alpha_en;
 	int is_yuv = fb->format->is_yuv;
 	struct drm_format_name_buf format_name;
-
-#if defined(CONFIG_ROCKCHIP_DRM_DEBUG)
-	bool AFBC_flag = false;
-	struct vop_dump_list *planlist;
-	unsigned long num_pages;
-	struct page **pages;
-	struct drm_gem_object *obj;
-	struct rockchip_gem_object *rk_obj;
-
-	num_pages = 0;
-	pages = NULL;
-	obj = fb->obj[0];
-	rk_obj = to_rockchip_obj(obj);
-	if (rk_obj) {
-		num_pages = rk_obj->num_pages;
-		pages = rk_obj->pages;
-	}
-	if (fb->modifier == DRM_FORMAT_MOD_ARM_AFBC(AFBC_FORMAT_MOD_BLOCK_SIZE_16x16))
-		AFBC_flag = true;
-	else
-		AFBC_flag = false;
-#endif
 
 	/*
 	 * can't update plane when vop is disabled.
@@ -2166,35 +2134,6 @@ static void vop_plane_atomic_update(struct drm_plane *plane,
 	 * actual_w, actual_h)
 	 */
 	vop->is_iommu_needed = true;
-#if defined(CONFIG_ROCKCHIP_DRM_DEBUG)
-	kfree(vop_plane_state->planlist);
-	vop_plane_state->planlist = NULL;
-
-	planlist = kmalloc(sizeof(*planlist), GFP_KERNEL);
-	if (planlist) {
-		planlist->dump_info.AFBC_flag = AFBC_flag;
-		planlist->dump_info.area_id = win->area_id;
-		planlist->dump_info.win_id = win->win_id;
-		planlist->dump_info.yuv_format =
-			is_yuv_support(fb->format->format);
-		planlist->dump_info.num_pages = num_pages;
-		planlist->dump_info.pages = pages;
-		planlist->dump_info.offset = vop_plane_state->offset;
-		planlist->dump_info.pitches = fb->pitches[0];
-		planlist->dump_info.height = actual_h;
-		planlist->dump_info.format = fb->format;
-		list_add_tail(&planlist->entry, &vop->rockchip_crtc.vop_dump_list_head);
-		vop_plane_state->planlist = planlist;
-	} else {
-		DRM_ERROR("can't alloc a node of planlist %p\n", planlist);
-		return;
-	}
-	if (vop->rockchip_crtc.vop_dump_status == DUMP_KEEP ||
-	    vop->rockchip_crtc.vop_dump_times > 0) {
-		rockchip_drm_dump_plane_buffer(&planlist->dump_info, vop->rockchip_crtc.frame_count);
-		vop->rockchip_crtc.vop_dump_times--;
-	}
-#endif
 }
 
 static const struct drm_plane_helper_funcs plane_helper_funcs = {
@@ -2895,27 +2834,9 @@ static size_t vop_crtc_bandwidth(struct drm_crtc *crtc,
 	u64 line_bw_mbyte = 0;
 	int cnt = 0, plane_num = 0;
 	struct drm_atomic_state *state = crtc_state->state;
-#if defined(CONFIG_ROCKCHIP_DRM_DEBUG)
-	struct vop_dump_list *pos, *n;
-	struct vop *vop = to_vop(crtc);
-#endif
 
 	if (!htotal || !vdisplay)
 		return 0;
-
-#if defined(CONFIG_ROCKCHIP_DRM_DEBUG)
-	if (!vop->rockchip_crtc.vop_dump_list_init_flag) {
-		INIT_LIST_HEAD(&vop->rockchip_crtc.vop_dump_list_head);
-		vop->rockchip_crtc.vop_dump_list_init_flag = true;
-	}
-	list_for_each_entry_safe(pos, n, &vop->rockchip_crtc.vop_dump_list_head, entry) {
-		list_del(&pos->entry);
-	}
-	if (vop->rockchip_crtc.vop_dump_status == DUMP_KEEP ||
-	    vop->rockchip_crtc.vop_dump_times > 0) {
-		vop->rockchip_crtc.frame_count++;
-	}
-#endif
 
 	drm_atomic_crtc_state_for_each_plane(plane, crtc_state)
 		plane_num++;
@@ -4035,6 +3956,14 @@ static void vop_crtc_atomic_flush(struct drm_crtc *crtc,
 	unsigned long flags;
 	struct rockchip_crtc_state *s =
 		to_rockchip_crtc_state(crtc->state);
+
+#if defined(CONFIG_ROCKCHIP_DRM_DEBUG)
+	if (vop->rockchip_crtc.vop_dump_status == DUMP_KEEP ||
+	    vop->rockchip_crtc.vop_dump_times > 0) {
+		rockchip_drm_crtc_dump_plane_buffer(crtc);
+		vop->rockchip_crtc.vop_dump_times--;
+	}
+#endif
 
 	vop_cfg_update(crtc, old_crtc_state);
 
