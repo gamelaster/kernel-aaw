@@ -5376,20 +5376,6 @@ static void rk3588_vop2_win_cfg_axi(struct vop2_win *win)
 	VOP_WIN_SET(vop2, win, axi_uv_id, win->axi_uv_id);
 }
 
-static const char *modifier_to_string(uint64_t modifier)
-{
-	switch (modifier) {
-	case DRM_FORMAT_MOD_ROCKCHIP_TILED(ROCKCHIP_TILED_BLOCK_SIZE_8x8):
-		return "[TILE_8x8]";
-	case DRM_FORMAT_MOD_ROCKCHIP_TILED(ROCKCHIP_TILED_BLOCK_SIZE_4x4_MODE0):
-		return "[TILE_4x4_M0]";
-	case DRM_FORMAT_MOD_ROCKCHIP_TILED(ROCKCHIP_TILED_BLOCK_SIZE_4x4_MODE1):
-		return "[TILE_4x4_M1]";
-	default:
-		return drm_is_afbc(modifier) ? "[AFBC]" : "";
-	}
-}
-
 static void vop2_win_atomic_update(struct vop2_win *win, struct drm_rect *src, struct drm_rect *dst,
 				   struct drm_plane_state *pstate)
 {
@@ -5529,7 +5515,8 @@ static void vop2_win_atomic_update(struct vop2_win *win, struct drm_rect *src, s
 				     vp->id, win->name, actual_w, actual_h, dsp_w, dsp_h,
 				     dsp_stx, dsp_sty,
 				     drm_get_format_name(fb->format->format, &format_name),
-				     modifier_to_string(fb->modifier), &vpstate->yrgb_mst, current->comm);
+				     rockchip_drm_modifier_to_string(fb->modifier),
+				     &vpstate->yrgb_mst, current->comm);
 
 	if (vop2->version != VOP_VERSION_RK3568)
 		rk3588_vop2_win_cfg_axi(win);
@@ -5719,7 +5706,8 @@ static void vop2_plane_atomic_update(struct drm_plane *plane, struct drm_plane_s
 					     drm_rect_width(&vpstate->dest), drm_rect_height(&vpstate->dest),
 					     vpstate->dest.x1, vpstate->dest.y1,
 					     drm_get_format_name(fb->format->format, &format_name),
-					     modifier_to_string(fb->modifier), &vpstate->yrgb_mst);
+					     rockchip_drm_modifier_to_string(fb->modifier),
+					     &vpstate->yrgb_mst);
 
 		vop2_calc_drm_rect_for_splice(vpstate, &wsrc, &wdst, &right_wsrc, &right_wdst);
 		splice_win = win->splice_win;
@@ -6496,7 +6484,7 @@ static int vop2_plane_info_dump(struct seq_file *s, struct drm_plane *plane)
 	drm_get_format_name(fb->format->format, &format_name);
 	DEBUG_PRINT("\tformat: %s%s%s[%d] color_space[%d] glb_alpha[0x%x]\n",
 		    format_name.str,
-		    modifier_to_string(fb->modifier),
+		    rockchip_drm_modifier_to_string(fb->modifier),
 		    vpstate->eotf ? " HDR" : " SDR", vpstate->eotf,
 		    vpstate->color_space, vpstate->global_alpha);
 	DEBUG_PRINT("\trotate: xmirror: %d ymirror: %d rotate_90: %d rotate_270: %d\n",

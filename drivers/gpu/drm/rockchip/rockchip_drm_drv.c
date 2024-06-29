@@ -28,6 +28,7 @@
 #include <drm/drm_displayid.h>
 #include <drm/drm_fb_helper.h>
 #include <drm/drm_gem_cma_helper.h>
+#include <drm/drm_gem_framebuffer_helper.h>
 #include <drm/drm_of.h>
 #include <drm/drm_probe_helper.h>
 #include <drm/drm_vblank.h>
@@ -124,6 +125,28 @@ void rockchip_drm_dbg_thread_info(const struct device *dev,
 
 	va_end(args);
 }
+
+const char *rockchip_drm_modifier_to_string(uint64_t modifier)
+{
+	switch (modifier) {
+	case DRM_FORMAT_MOD_ROCKCHIP_TILED(ROCKCHIP_TILED_BLOCK_SIZE_8x8):
+		return "_TILE-8x8";
+	case DRM_FORMAT_MOD_ROCKCHIP_TILED(ROCKCHIP_TILED_BLOCK_SIZE_4x4_MODE0):
+		return "_TILE-4x4-M0";
+	case DRM_FORMAT_MOD_ROCKCHIP_TILED(ROCKCHIP_TILED_BLOCK_SIZE_4x4_MODE1):
+		return "_TILE-4x4-M1";
+	case DRM_FORMAT_MOD_ROCKCHIP_RFBC(ROCKCHIP_RFBC_BLOCK_SIZE_64x4):
+		return "_RFBC-64x4";
+	default:
+		if (modifier & AFBC_FORMAT_MOD_BLOCK_SIZE_32x8)
+			return "_AFBC-32x8";
+		else if (modifier & AFBC_FORMAT_MOD_BLOCK_SIZE_16x16)
+			return "_AFBC-16x16";
+		else
+			return "";
+	}
+}
+EXPORT_SYMBOL(rockchip_drm_modifier_to_string);
 
 /**
  * rockchip_drm_wait_vact_end

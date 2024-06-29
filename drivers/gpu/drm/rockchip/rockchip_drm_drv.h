@@ -619,6 +619,7 @@ int rockchip_drm_parse_next_hdr(struct next_hdr_sink_data *sink_data,
 int rockchip_drm_parse_colorimetry_data_block(u8 *colorimetry, const struct edid *edid);
 long rockchip_drm_dclk_round_rate(u32 version, struct clk *dclk, unsigned long rate);
 int rockchip_drm_dclk_set_rate(u32 version, struct clk *dclk, unsigned long rate);
+const char *rockchip_drm_modifier_to_string(uint64_t modifier);
 void rockchip_drm_reset_iommu_fault_handler_rate_limit(void);
 void rockchip_drm_send_error_event(struct rockchip_drm_private *priv,
 				   enum rockchip_drm_error_event_type event);
