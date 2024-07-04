@@ -123,6 +123,7 @@ int rockchip_drm_crtc_dump_plane_buffer(struct drm_crtc *crtc)
 
 static int rockchip_drm_dump_buffer_show(struct seq_file *m, void *data)
 {
+	seq_puts(m, "VOP dump buffer version: v2.0.0\n");
 	seq_puts(m, "  echo dump    > dump to dump one frame\n");
 	seq_puts(m, "  echo dumpon  > dump to start vop keep dumping\n");
 	seq_puts(m, "  echo dumpoff > dump to stop keep dumping\n");
