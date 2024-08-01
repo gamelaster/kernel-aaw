@@ -1201,6 +1201,8 @@ static void cdn_dp_unbind(struct device *dev, struct device *master, void *data)
 	}
 
 	cancel_delayed_work_sync(&dp->event_work);
+	rockchip_drm_unregister_sub_dev(&dp->sub_dev);
+	drm_dp_aux_unregister(&dp->aux);
 	cdn_dp_encoder_disable(encoder);
 	encoder->funcs->destroy(encoder);
 	connector->funcs->destroy(connector);
