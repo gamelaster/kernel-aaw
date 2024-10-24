@@ -4023,6 +4023,12 @@ err:
 	return ret;
 }
 
+static int rkisp_vicap_sof(struct rkisp_device *dev, struct rkisp_vicap_sof *sof)
+{
+	dev->vicap_sof = *sof;
+	return 0;
+}
+
 static long rkisp_ioctl(struct v4l2_subdev *sd, unsigned int cmd, void *arg)
 {
 	struct rkisp_device *isp_dev = sd_to_isp_dev(sd);
@@ -4203,6 +4209,9 @@ static long rkisp_ioctl(struct v4l2_subdev *sd, unsigned int cmd, void *arg)
 		break;
 	case RKISP_CMD_SET_FPN:
 		ret = rkisp_set_fpn(isp_dev, arg);
+		break;
+	case RKISP_VICAP_CMD_SOF:
+		ret = rkisp_vicap_sof(isp_dev, arg);
 		break;
 	default:
 		ret = -ENOIOCTLCMD;
