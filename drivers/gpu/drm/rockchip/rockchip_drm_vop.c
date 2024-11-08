@@ -1644,6 +1644,8 @@ static void vop_crtc_atomic_disable(struct drm_crtc *crtc,
 	struct vop *vop = to_vop(crtc);
 	int sys_status = drm_crtc_index(crtc) ?
 				SYS_STATUS_LCDC1 : SYS_STATUS_LCDC0;
+	struct drm_display_mode *mode = &old_state->adjusted_mode;
+	int hold_time, vrefresh;
 
 	WARN_ON(vop->event);
 
@@ -1676,8 +1678,14 @@ static void vop_crtc_atomic_disable(struct drm_crtc *crtc,
 
 	spin_unlock(&vop->reg_lock);
 
+	/* Calculate 10 frame cost time */
+	vrefresh = drm_mode_vrefresh(mode);
+	if (vrefresh == 0)
+		vrefresh = 1;
+	hold_time = DIV_ROUND_UP(1000, vrefresh) * 10;
+
 	WARN_ON(!wait_for_completion_timeout(&vop->dsp_hold_completion,
-					     msecs_to_jiffies(50)));
+					     msecs_to_jiffies(hold_time)));
 
 	vop_dsp_hold_valid_irq_disable(vop);
 
