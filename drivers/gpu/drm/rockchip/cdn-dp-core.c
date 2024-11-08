@@ -230,7 +230,8 @@ static void cdn_dp_oob_hotplug_event(struct drm_connector *connector)
 {
 	struct cdn_dp_device *dp = connector_to_dp(connector);
 
-	schedule_delayed_work(&dp->event_work, msecs_to_jiffies(100));
+	if (dp->registered)
+		schedule_delayed_work(&dp->event_work, msecs_to_jiffies(100));
 }
 
 static const struct drm_connector_funcs cdn_dp_atomic_connector_funcs = {
@@ -720,7 +721,7 @@ static void cdn_dp_encoder_disable(struct drm_encoder *encoder)
 	 * 2. If re-training or re-config failed, the DP will be disabled here.
 	 *    run the event_work to re-connect it.
 	 */
-	if (!dp->connected && cdn_dp_connected_port(dp))
+	if (dp->registered && !dp->connected && cdn_dp_connected_port(dp))
 		schedule_delayed_work(&dp->event_work, 0);
 }
 
@@ -756,6 +757,50 @@ static const struct drm_encoder_helper_funcs cdn_dp_encoder_helper_funcs = {
 	.enable = cdn_dp_encoder_enable,
 	.disable = cdn_dp_encoder_disable,
 	.atomic_check = cdn_dp_encoder_atomic_check,
+};
+
+static int cdn_dp_encoder_late_register(struct drm_encoder *encoder)
+{
+	struct cdn_dp_device *dp = encoder_to_dp(encoder);
+	int i;
+
+	for (i = 0; i < dp->ports; i++) {
+		if (!dp->port[i])
+			continue;
+
+		if (dp->port[i]->hpd_gpio)
+			enable_irq(dp->port[i]->hpd_irq);
+	}
+
+	dp->registered = true;
+	schedule_delayed_work(&dp->event_work, 0);
+
+	return 0;
+}
+
+static void cdn_dp_encoder_early_unregister(struct drm_encoder *encoder)
+{
+	struct cdn_dp_device *dp = encoder_to_dp(encoder);
+	int i;
+
+	for (i = 0; i < dp->ports; i++) {
+		if (!dp->port[i])
+			continue;
+
+		if (dp->port[i]->hpd_gpio)
+			disable_irq(dp->port[i]->hpd_irq);
+
+	}
+
+	dp->registered = false;
+	barrier();
+	cancel_delayed_work_sync(&dp->event_work);
+}
+
+static const struct drm_encoder_funcs cdn_dp_encoder_funcs = {
+	.late_register = cdn_dp_encoder_late_register,
+	.early_unregister = cdn_dp_encoder_early_unregister,
+	.destroy = drm_encoder_cleanup,
 };
 
 static int cdn_dp_parse_dt(struct cdn_dp_device *dp)
@@ -1103,7 +1148,7 @@ static int cdn_dp_bind(struct device *dev, struct device *master, void *data)
 	struct drm_encoder *encoder;
 	struct drm_connector *connector;
 	struct drm_device *drm_dev = data;
-	int ret, i;
+	int ret;
 
 	ret = cdn_dp_parse_dt(dp);
 	if (ret < 0)
@@ -1130,8 +1175,8 @@ static int cdn_dp_bind(struct device *dev, struct device *master, void *data)
 								      dev->of_node);
 	DRM_DEBUG_KMS("possible_crtcs = 0x%x\n", encoder->possible_crtcs);
 
-	ret = drm_simple_encoder_init(drm_dev, encoder,
-				      DRM_MODE_ENCODER_TMDS);
+	ret = drm_encoder_init(drm_dev, encoder, &cdn_dp_encoder_funcs,
+			       DRM_MODE_ENCODER_TMDS, NULL);
 	if (ret) {
 		DRM_ERROR("failed to initialize encoder with drm\n");
 		return ret;
@@ -1166,16 +1211,6 @@ static int cdn_dp_bind(struct device *dev, struct device *master, void *data)
 
 	pm_runtime_enable(dev);
 
-	for (i = 0; i < dp->ports; i++) {
-		if (!dp->port[i])
-			continue;
-
-		if (dp->port[i]->hpd_gpio)
-			enable_irq(dp->port[i]->hpd_irq);
-	}
-
-	schedule_delayed_work(&dp->event_work, 0);
-
 	return 0;
 
 err_free_connector:
@@ -1190,17 +1225,7 @@ static void cdn_dp_unbind(struct device *dev, struct device *master, void *data)
 	struct cdn_dp_device *dp = dev_get_drvdata(dev);
 	struct drm_encoder *encoder = &dp->encoder;
 	struct drm_connector *connector = &dp->connector;
-	int i;
 
-	for (i = 0; i < dp->ports; i++) {
-		if (!dp->port[i])
-			continue;
-
-		if (dp->port[i]->hpd_gpio)
-			disable_irq(dp->port[i]->hpd_irq);
-	}
-
-	cancel_delayed_work_sync(&dp->event_work);
 	rockchip_drm_unregister_sub_dev(&dp->sub_dev);
 	drm_dp_aux_unregister(&dp->aux);
 	cdn_dp_encoder_disable(encoder);
