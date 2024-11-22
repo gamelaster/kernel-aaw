@@ -2309,7 +2309,10 @@ static void pl330_tasklet(struct tasklet_struct *t)
 		dmaengine_desc_get_callback(&desc->txd, &cb);
 
 		desc->status = FREE;
+
+		spin_lock(&pch->dmac->pool_lock);
 		list_move_tail(&desc->node, &pch->dmac->desc_pool);
+		spin_unlock(&pch->dmac->pool_lock);
 
 		dma_descriptor_unmap(&desc->txd);
 
@@ -2497,9 +2500,12 @@ static int pl330_terminate_all(struct dma_chan *chan)
 		dma_cookie_complete(&desc->txd);
 	}
 
+	spin_lock(&pl330->pool_lock);
 	list_splice_tail_init(&pch->submitted_list, &pl330->desc_pool);
 	list_splice_tail_init(&pch->work_list, &pl330->desc_pool);
 	list_splice_tail_init(&pch->completed_list, &pl330->desc_pool);
+	spin_unlock(&pl330->pool_lock);
+
 	spin_unlock_irqrestore(&pch->lock, flags);
 	pm_runtime_mark_last_busy(pl330->ddma.dev);
 	if (power_down)
@@ -2555,7 +2561,9 @@ static void pl330_free_chan_resources(struct dma_chan *chan)
 	pl330_release_channel(pch->thread);
 	pch->thread = NULL;
 
+	spin_lock(&pl330->pool_lock);
 	list_splice_tail_init(&pch->work_list, &pch->dmac->desc_pool);
+	spin_unlock(&pl330->pool_lock);
 
 	spin_unlock_irqrestore(&pl330->lock, flags);
 	pm_runtime_mark_last_busy(pch->dmac->ddma.dev);
