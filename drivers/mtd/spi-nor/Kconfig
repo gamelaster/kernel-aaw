@@ -38,5 +38,6 @@ config MTD_SPI_NOR_AUTO_MERGE
 	  Enable the auto merge the two SPI flash in one.
 
 source "drivers/mtd/spi-nor/controllers/Kconfig"
+source "drivers/mtd/spi-nor/Kconfig.spinorlist"
 
 endif # MTD_SPI_NOR
