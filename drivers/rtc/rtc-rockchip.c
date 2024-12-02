@@ -751,11 +751,11 @@ static int rockchip_rtc_suspend(struct device *dev)
 	struct platform_device *pdev = to_platform_device(dev);
 	struct rockchip_rtc *rtc = dev_get_drvdata(&pdev->dev);
 
-	if (rtc->suspend_bypass)
-		return 0;
-
 	if (device_may_wakeup(dev))
 		enable_irq_wake(rtc->irq);
+
+	if (rtc->suspend_bypass)
+		return 0;
 
 	rockchip_rtc_trim_close(rtc);
 
@@ -774,11 +774,11 @@ static int rockchip_rtc_resume(struct device *dev)
 	struct rockchip_rtc *rtc = dev_get_drvdata(&pdev->dev);
 	int ret;
 
-	if (rtc->suspend_bypass)
-		return 0;
-
 	if (device_may_wakeup(dev))
 		disable_irq_wake(rtc->irq);
+
+	if (rtc->suspend_bypass)
+		return 0;
 
 	rtc->chip->clamp_en(rtc->grf, 0);
 	ret = clk_bulk_prepare_enable(rtc->num_clks, rtc->clks);
