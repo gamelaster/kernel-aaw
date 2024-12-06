@@ -167,6 +167,7 @@ struct rk_pcie {
 	unsigned int			num_ob_windows;
 	void __iomem			*dbi_base;
 	u32				rasdes_off;
+	u32				linkcap_off;
 	void __iomem			*apb_base;
 	struct phy			*phy;
 	struct clk_bulk_data		*clks;
@@ -2208,6 +2209,15 @@ retry_regulator:
 			goto remove_rst_wq;
 	}
 
+	/* Enable L0s capability */
+	rk_pcie->linkcap_off = dw_pcie_find_capability(rk_pcie->pci, PCI_CAP_ID_EXP);
+	if (rk_pcie->linkcap_off) {
+		rk_pcie->linkcap_off += PCI_EXP_LNKCAP;
+		val = dw_pcie_readl_dbi(rk_pcie->pci, rk_pcie->linkcap_off);
+		val |= PCI_EXP_LNKCAP_ASPM_L0S;
+		dw_pcie_writel_dbi(rk_pcie->pci, rk_pcie->linkcap_off, val);
+	}
+
 	dw_pcie_dbi_ro_wr_dis(pci);
 
 	device_init_wakeup(dev, true);
@@ -2526,6 +2536,13 @@ static int __maybe_unused rockchip_dw_pcie_resume(struct device *dev)
 	rk_pcie->in_suspend = false;
 
 std_rc_done:
+	/* Enable L0s capability */
+	if (rk_pcie->linkcap_off) {
+		ret = dw_pcie_readl_dbi(rk_pcie->pci, rk_pcie->linkcap_off);
+		ret |= PCI_EXP_LNKCAP_ASPM_L0S;
+		dw_pcie_writel_dbi(rk_pcie->pci, rk_pcie->linkcap_off, ret);
+	}
+
 	dw_pcie_dbi_ro_wr_dis(rk_pcie->pci);
 	/* hold link reset grant after link-up */
 	if (rk_pcie->is_rk1808) {
