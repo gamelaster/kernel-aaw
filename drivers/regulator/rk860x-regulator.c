@@ -405,6 +405,7 @@ static const struct regmap_config rk860x_regmap_config = {
 	.reg_bits = 8,
 	.val_bits = 8,
 	.max_register = RK860X_MAX_SET,
+	.num_reg_defaults_raw = RK860X_MAX_SET + 1,
 	.cache_type = REGCACHE_FLAT,
 };
 
