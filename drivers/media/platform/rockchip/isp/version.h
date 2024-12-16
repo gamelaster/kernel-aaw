@@ -571,6 +571,29 @@
  * 2.rawrd format sync with isp input format change
  * 3.fix rawrd bytesperline
  * 4.wait aiq params for isp33 fast
+ *
+ * v2.9.0 (AIQ v6.9.0)
+ * 1.fix free bay3d buf fd to get again fail
+ * 2.write burst adjust to 8 for isp33
+ * 3.add iqtool video for isp32 isp33
+ * 4.fix lsc switch for isp30
+ * 5.add fpn function
+ * 6.output stream burst 16 for isp33
+ * 7.wait mcu done
+ * 8.fix buf config for isp20 and isp21
+ * 9.fix unite mode for fast
+ * 10.512 extended pixel for rv1103b
+ * 11.fix unite mode for isp32
+ * 12,remove graph_mutex
+ * 13.add raw filter to procfs debug
+ * 14.fix multi sensor with unite mode
+ * 15.fix group aov no working for isp32
+ * 16.fix bay3d if two readback for isp32
+ * 17.fix isp30 unite mode for rk3588
+ * 18.add RKISP_VICAP_CMD_SOF cmd
+ * 19.add sensor exposure for isp30 and isp39
+ * 20.support frame information attach to image tail
+ * 21.fix isp30 stream buf size if enable attach information
  */
 
 #define RKISP_DRIVER_VERSION RKISP_API_VERSION
