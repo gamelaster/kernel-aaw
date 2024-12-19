@@ -1039,6 +1039,28 @@ out:
 }
 EXPORT_SYMBOL(rockchip_pvtpll_add_length);
 
+int rockchip_pvtpll_set_volt_sel(struct rockchip_opp_info *info, int volt_sel)
+{
+	struct arm_smccc_res res;
+
+	if (!info)
+		return 0;
+	if (volt_sel < 0)
+		return 0;
+	if (info->pvtpll_clk_id == UINT_MAX)
+		return 0;
+
+	res = sip_smc_pvtpll_config(PVTPLL_VOLT_SEL, info->pvtpll_clk_id,
+				    (u32)volt_sel, 0, 0, 0, 0);
+	if (res.a0)
+		dev_err(info->dev,
+			"%s: error cfg clk_id=%u voltsel (%d)\n", __func__,
+			info->pvtpll_clk_id, (int)res.a0);
+
+	return 0;
+}
+EXPORT_SYMBOL(rockchip_pvtpll_set_volt_sel);
+
 void rockchip_init_pvtpll_table(struct rockchip_opp_info *info, int bin)
 {
 	struct device_node *np = NULL;
@@ -1067,8 +1089,10 @@ void rockchip_init_pvtpll_table(struct rockchip_opp_info *info, int bin)
 	of_node_put(clkspec.np);
 
 	res = sip_smc_get_pvtpll_info(PVTPLL_GET_INFO, info->pvtpll_clk_id);
-	if (res.a0)
+	if (res.a0) {
+		info->pvtpll_clk_id = UINT_MAX;
 		goto out;
+	}
 	if (!res.a1)
 		info->pvtpll_low_temp = true;
 
@@ -2020,6 +2044,7 @@ int rockchip_init_opp_table(struct device *dev, struct rockchip_opp_info *info,
 	if (!info)
 		goto next;
 	info->dev = dev;
+	info->pvtpll_clk_id = UINT_MAX;
 
 	ret = rockchip_get_opp_clk(dev, np, info);
 	if (ret)
@@ -2065,6 +2090,7 @@ next:
 	rockchip_adjust_power_scale(dev, scale);
 	rockchip_pvtpll_calibrate_opp(info);
 	rockchip_pvtpll_add_length(info);
+	rockchip_pvtpll_set_volt_sel(info, volt_sel);
 
 dis_opp_clk:
 	if (info && info->clks)

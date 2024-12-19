@@ -89,6 +89,7 @@ void rockchip_of_get_lkg_sel(struct device *dev, struct device_node *np,
 			     int *volt_sel, int *scale_sel);
 void rockchip_pvtpll_calibrate_opp(struct rockchip_opp_info *info);
 void rockchip_pvtpll_add_length(struct rockchip_opp_info *info);
+int rockchip_pvtpll_set_volt_sel(struct rockchip_opp_info *info, int volt_sel);
 void rockchip_init_pvtpll_table(struct rockchip_opp_info *info, int bin);
 void rockchip_of_get_pvtm_sel(struct device *dev, struct device_node *np,
 			      char *reg_name, int bin, int process,
@@ -155,6 +156,12 @@ static inline void rockchip_pvtpll_calibrate_opp(struct rockchip_opp_info *info)
 
 static inline void rockchip_pvtpll_add_length(struct rockchip_opp_info *info)
 {
+}
+
+static inline int rockchip_pvtpll_set_volt_sel(struct rockchip_opp_info *info,
+					       int volt_sel)
+{
+	return -EOPNOTSUPP;
 }
 
 static inline void rockchip_init_pvtpll_table(struct rockchip_opp_info *info,
