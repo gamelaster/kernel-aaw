@@ -79,6 +79,7 @@ struct rockchip_opp_info {
 	u32 current_rm;
 	u32 target_rm;
 	u32 pvtpll_clk_id;
+	bool pvtpll_smc;
 	bool pvtpll_low_temp;
 };
 
