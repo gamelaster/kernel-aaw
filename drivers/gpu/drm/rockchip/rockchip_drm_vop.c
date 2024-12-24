@@ -2921,13 +2921,15 @@ static void vop_set_out_mode(struct vop *vop, u32 mode)
 	int ret;
 	u32 val;
 
+	if (!vop)
+		return;
+
 	VOP_CTRL_SET(vop, out_mode, mode);
 	vop_cfg_done(vop);
 	ret = readx_poll_timeout(vop_mode_done, vop, val, val == mode,
 				 1000, 500 * 1000);
 	if (ret)
 		dev_err(vop->dev, "wait mode 0x%x timeout\n", mode);
-
 }
 
 static void vop_crtc_send_mcu_cmd(struct drm_crtc *crtc,  u32 type, u32 value)
