@@ -3,6 +3,7 @@
 /dts-v1/;
 
 #include "rv1106.dtsi"
+#include "rv1106-amp.dtsi"
 #include <dt-bindings/input/input.h>
 
 / {
@@ -10,18 +11,33 @@
     compatible = "rockchip,aaw2", "rockchip,rv1106";
 
     chosen {
-        bootargs = "rk_dma_heap_cma=16M console=ttyS2,115200";
+        bootargs = "console=ttyS2,115200 rootwait coherent_pool=0";
+    };
+
+    reserved_memory: reserved-memory {
+        status = "okay";
+        #address-cells = <1>;
+        #size-cells = <1>;
+        ranges;
+
+        linux,cma {
+            status = "okay";
+            compatible = "shared-dma-pool";
+            inactive;
+            reusable;
+            size = <0xA00000>; //10M
+            linux,cma-default;
+        };
     };
 
     vdd_arm: vdd-arm {
         compatible = "regulator-fixed";
         regulator-name = "vdd_arm";
-        regulator-min-microvolt = <724000>;
-        regulator-max-microvolt = <1078000>;
-        regulator-init-microvolt = <950000>;
+        regulator-min-microvolt = <800000>;
+        regulator-max-microvolt = <1000000>;
+        regulator-init-microvolt = <900000>;
         regulator-always-on;
         regulator-boot-on;
-        regulator-settling-time-up-us = <250>;
     };
 
     vcc_1v8: vcc-1v8 {
