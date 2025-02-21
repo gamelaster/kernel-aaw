@@ -206,6 +206,7 @@
 
 &u2phy_otg {
 	status = "okay";
+	rockchip,vbus-always-on;
 };
 
 &usbdrd {
