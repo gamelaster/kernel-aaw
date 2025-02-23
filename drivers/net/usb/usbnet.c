@@ -1984,13 +1984,9 @@ static int __usbnet_read_cmd(struct usbnet *dev, u8 cmd, u8 reqtype,
 			      USB_CTRL_GET_TIMEOUT);
 	if (err > 0 && err <= size) {
         if (data){
-            if(cmd == USB_CDC_GET_NTB_PARAMETERS){
-                netdev_err(dev->net,
-                                "ERROR - received too many bytes, expecting %d max, got %d.\n",
-                                size, err);
-                for(int i = 0; i < err; i++) {
-                    netdev_err(dev->net, "NTB PARAM %d: %02x", i, data[i]);
-                }
+            if(cmd == (u8)0x80){
+                print_hex_dump(KERN_ERR, "NTB PARAMS raw: ", DUMP_PREFIX_NONE,
+                                    16, 1, data, err, false);
             }
 
             memcpy(data, buf, err);
