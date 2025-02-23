@@ -503,6 +503,9 @@ static int cdc_ncm_init(struct usbnet *dev)
 	u8 iface_no = ctx->control->cur_altsetting->desc.bInterfaceNumber;
 	int err;
 
+    // hack - delay NCM a bit
+    msleep(200);
+
 	err = usbnet_read_cmd(dev, USB_CDC_GET_NTB_PARAMETERS,
 			      USB_TYPE_CLASS | USB_DIR_IN
 			      |USB_RECIP_INTERFACE,
