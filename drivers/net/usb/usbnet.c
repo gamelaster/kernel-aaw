@@ -1986,7 +1986,7 @@ static int __usbnet_read_cmd(struct usbnet *dev, u8 cmd, u8 reqtype,
         if (data){
             if(cmd == (u8)0x80){
                 print_hex_dump(KERN_ERR, "NTB PARAMS raw: ", DUMP_PREFIX_NONE,
-                                    16, 1, data, err, false);
+                                    16, 1, buf, err, false);
             }
 
             memcpy(data, buf, err);
