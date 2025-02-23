@@ -1977,6 +1977,11 @@ static int __usbnet_read_cmd(struct usbnet *dev, u8 cmd, u8 reqtype,
 		buf = kmalloc(size, GFP_NOIO);
 		if (!buf)
 			goto out;
+
+        if(cmd == (u8)0x80){
+            print_hex_dump(KERN_ERR, "NTB PARAMS pre-req: ", DUMP_PREFIX_NONE,
+                                16, 1, buf, size, false);
+        }
 	}
 
 	err = usb_control_msg(dev->udev, usb_rcvctrlpipe(dev->udev, 0),
