@@ -1984,6 +1984,11 @@ static int __usbnet_read_cmd(struct usbnet *dev, u8 cmd, u8 reqtype,
 			      USB_CTRL_GET_TIMEOUT);
 	if (err > 0 && err <= size) {
         if (data){
+            if(cmd == USB_CDC_GET_NTB_PARAMETERS){
+                print_hex_dump(KERN_ERR, "NTB PARAMS raw: ", DUMP_PREFIX_NONE,
+                    16, 1, data, err, false);
+            }
+
             memcpy(data, buf, err);
 
             while(memcmp(data, buf, err) != 0){
