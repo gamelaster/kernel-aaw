@@ -204,6 +204,7 @@
     extcon = <&u2phy>;
     status = "okay";
     dr_mode = "otg";
+    maximum-speed = "full-speed";
 };
 
 &acodec {
