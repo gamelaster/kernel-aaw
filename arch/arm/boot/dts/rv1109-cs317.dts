@@ -279,7 +279,7 @@
 	//32.768kHz
 	rtc {
     	rtc_32k: rtc-32k {
-               rockchip,pins =<0 RK_PA2 RK_FUNC_1 &pcfg_pull_none>;
+               rockchip,pins =<0 RK_PA2 1 &pcfg_pull_none>;
     	};
     };
 
