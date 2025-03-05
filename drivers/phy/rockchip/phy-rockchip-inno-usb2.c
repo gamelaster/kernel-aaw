@@ -2820,7 +2820,7 @@ static int rv1106_usb2phy_tuning(struct rockchip_usb2phy *rphy)
 	}
 
 	/* Set RX Squelch trigger point configure to 4'b0000(112.5 mV) */
-	phy_update_bits(rphy->phy_base + 0x64, GENMASK(6, 3), (0x00 << 3));
+	phy_update_bits(rphy->phy_base + 0x64, GENMASK(6, 3), (0x01 << 3));
 
 	/* Turn on differential receiver */
 	phy_set_bits(rphy->phy_base + 0x100, BIT(6));
@@ -2832,8 +2832,8 @@ static int rv1106_usb2phy_tuning(struct rockchip_usb2phy *rphy)
 	phy_update_bits(rphy->phy_base + 0x124, GENMASK(4, 2), (0x03 << 2));
 
 	/* Bypass Squelch detector calibration */
-	//phy_update_bits(rphy->phy_base + 0x1a4, GENMASK(7, 4), (0x01 << 4));
-	//phy_update_bits(rphy->phy_base + 0x1b4, GENMASK(7, 4), (0x01 << 4));
+	phy_update_bits(rphy->phy_base + 0x1a4, GENMASK(7, 4), (0x01 << 4));
+	phy_update_bits(rphy->phy_base + 0x1b4, GENMASK(7, 4), (0x01 << 4));
 
 	/* Set HS disconnect detect mode to single ended detect mode */
 	phy_set_bits(rphy->phy_base + 0x70, BIT(2));
