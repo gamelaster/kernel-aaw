@@ -38,6 +38,8 @@
 #define RKMODULE_EXTERNAL_MASTER_MODE	"external_master"
 #define RKMODULE_SLAVE_MODE		"slave"
 
+#define RKMODULE_CAMERA_STANDBY_HW	"rockchip,camera-module-stb"
+
 /* BT.656 & BT.1120 multi channel
  * On which channels it can send video data
  * related with struct rkmodule_bt656_mbus_info
@@ -183,6 +185,15 @@
 #define RKMODULE_SET_CAPTURE_MODE  \
 	_IOW('V', BASE_VIDIOC_PRIVATE + 40, struct rkmodule_capture_info)
 
+#define RKMODULE_GET_SKIP_FRAME  \
+	_IOR('V', BASE_VIDIOC_PRIVATE + 41, __u32)
+
+#define RKMODULE_GET_DSI_MODE       \
+	_IOR('V', BASE_VIDIOC_PRIVATE + 42, __u32)
+
+#define RKCIS_CMD_FLASH_LIGHT_CTRL  \
+	_IOW('V', BASE_VIDIOC_PRIVATE + 43, struct rk_light_param)
+
 struct rkmodule_i2cdev_info {
 	u8 slave_addr;
 } __attribute__ ((packed));
@@ -326,6 +337,7 @@ struct rkmodule_pdaf_inf {
 	__u32 dccmap_height;
 	__u32 dcc_mode;
 	__u32 dcc_dir;
+	__u32 pd_offset;
 	__u16 gainmap[RKMODULE_PADF_GAINMAP_LEN];
 	__u16 dccmap[RKMODULE_PDAF_DCCMAP_LEN];
 } __attribute__ ((packed));
@@ -637,6 +649,7 @@ enum rkmodule_reset_src {
 	RKICF_RESET_SRC_ERR_CUTOFF,
 	RKCIF_RESET_SRC_ERR_HOTPLUG,
 	RKCIF_RESET_SRC_ERR_APP,
+	RKCIF_RESET_SRC_ERR_ISP,
 };
 
 struct rkmodule_vicap_reset_info {
@@ -807,5 +820,18 @@ struct rkmodule_capture_info {
 		struct rkmodule_multi_combine_info multi_combine_info;
 	};
 };
+
+enum rk_light_type {
+	LIGHT_PWM,
+	LIGHT_GPIO,
+};
+
+struct rk_light_param {
+	__u8 light_type;
+	__u8 light_enable;
+	__u64 duty_cycle;
+	__u64 period;
+	__u32 polarity;
+} __attribute__ ((packed));
 
 #endif /* _UAPI_RKMODULE_CAMERA_H */

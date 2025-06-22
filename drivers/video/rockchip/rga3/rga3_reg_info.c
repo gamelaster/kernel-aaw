@@ -1070,7 +1070,7 @@ static void RGA3_set_reg_overlap_info(u8 *base, struct rga3_req *msg)
 	bottom_color_ctrl.bits.alpha_cal_mode = RGA_ALPHA_SATURATION;
 
 	top_color_ctrl.bits.global_alpha = config->fg_global_alpha_value;
-	bottom_color_ctrl.bits.global_alpha = config->fg_global_alpha_value;
+	bottom_color_ctrl.bits.global_alpha = config->bg_global_alpha_value;
 
 	/* porter duff alpha enable */
 	switch (config->mode) {
@@ -1643,70 +1643,30 @@ static void rga_cmd_to_rga3_cmd(struct rga_req *req_rga, struct rga3_req *req)
 			req->alpha_config.fg_pixel_alpha_en = rga_is_alpha_format(req->win1.format);
 			req->alpha_config.bg_pixel_alpha_en = rga_is_alpha_format(req->win0.format);
 
-			req->alpha_config.fg_global_alpha_en = false;
-			req->alpha_config.bg_global_alpha_en = false;
-
-			req->alpha_config.fg_global_alpha_value = req_rga->alpha_global_value;
-			req->alpha_config.bg_global_alpha_value = req_rga->alpha_global_value;
-
-			/* porter duff alpha enable */
-			switch (req_rga->PD_mode) {
-			/* dst = 0 */
-			case 0:
-				break;
-			case 1:
-				req->alpha_config.mode = RGA_ALPHA_BLEND_SRC;
-				break;
-			case 2:
-				req->alpha_config.mode = RGA_ALPHA_BLEND_DST;
-				break;
-			case 3:
-				if ((req_rga->alpha_rop_mode & 3) == 0) {
-					/* both use globalAlpha. */
+			if (req_rga->feature.global_alpha_en) {
+				if (req_rga->fg_global_alpha < 0xff) {
 					req->alpha_config.fg_global_alpha_en = true;
-					req->alpha_config.bg_global_alpha_en = true;
-				} else if ((req_rga->alpha_rop_mode & 3) == 1) {
-					/* Do not use globalAlpha. */
-					req->alpha_config.fg_global_alpha_en = false;
-					req->alpha_config.bg_global_alpha_en = false;
-				} else {
-					/* dst use globalAlpha */
-					req->alpha_config.fg_global_alpha_en = false;
-					req->alpha_config.bg_global_alpha_en = true;
+					req->alpha_config.fg_global_alpha_value =
+						req_rga->fg_global_alpha;
+				} else if (!req->alpha_config.fg_pixel_alpha_en) {
+					req->alpha_config.fg_global_alpha_en = true;
+					req->alpha_config.fg_global_alpha_value = 0xff;
 				}
 
-				req->alpha_config.mode = RGA_ALPHA_BLEND_SRC_OVER;
-				break;
-			case 4:
-				req->alpha_config.mode = RGA_ALPHA_BLEND_DST_OVER;
-				break;
-			case 5:
-				req->alpha_config.mode = RGA_ALPHA_BLEND_SRC_IN;
-				break;
-			case 6:
-				req->alpha_config.mode = RGA_ALPHA_BLEND_DST_IN;
-				break;
-			case 7:
-				req->alpha_config.mode = RGA_ALPHA_BLEND_SRC_OUT;
-				break;
-			case 8:
-				req->alpha_config.mode = RGA_ALPHA_BLEND_DST_OUT;
-				break;
-			case 9:
-				req->alpha_config.mode = RGA_ALPHA_BLEND_SRC_ATOP;
-				break;
-			case 10:
-				req->alpha_config.mode = RGA_ALPHA_BLEND_DST_ATOP;
-				break;
-			case 11:
-				req->alpha_config.mode = RGA_ALPHA_BLEND_XOR;
-				break;
-			case 12:
-				req->alpha_config.mode = RGA_ALPHA_BLEND_CLEAR;
-				break;
-			default:
-				break;
+				if (req_rga->bg_global_alpha < 0xff) {
+					req->alpha_config.bg_global_alpha_en = true;
+					req->alpha_config.bg_global_alpha_value =
+						req_rga->bg_global_alpha;
+				} else if (!req->alpha_config.bg_pixel_alpha_en) {
+					req->alpha_config.bg_global_alpha_en = true;
+					req->alpha_config.bg_global_alpha_value = 0xff;
+				}
+			} else {
+				req->alpha_config.bg_global_alpha_value = 0xff;
+				req->alpha_config.bg_global_alpha_value = 0xff;
 			}
+
+			req->alpha_config.mode = req_rga->PD_mode;
 		}
 	}
 
@@ -1795,32 +1755,71 @@ static int rga3_scale_check(const struct rga3_req *req)
 	u32 win0_saw, win0_sah, win0_daw, win0_dah;
 	u32 win1_saw, win1_sah, win1_daw, win1_dah;
 
-	win0_saw = req->win0.src_act_w;
-	win0_sah = req->win0.src_act_h;
-	win0_daw = req->win0.dst_act_w;
-	win0_dah = req->win0.dst_act_h;
+	if (req->rotate_mode & RGA3_ROT_BIT_ROT_90) {
+		if (req->win1.yrgb_addr != 0) {
+			/* ABB */
+			if (req->win0.yrgb_addr == req->wr.yrgb_addr) {
+				/* win0 do not need rotate, but net equal to wr */
+				win0_saw = req->win0.src_act_h;
+				win0_sah = req->win0.src_act_w;
+				win0_daw = req->win0.dst_act_h;
+				win0_dah = req->win0.dst_act_w;
+
+				win1_saw = req->win1.dst_act_w;
+				win1_sah = req->win1.dst_act_h;
+				win1_daw = req->win1.dst_act_h;
+				win1_dah = req->win1.dst_act_w;
+			} else {
+				win0_saw = req->win0.src_act_w;
+				win0_sah = req->win0.src_act_h;
+				win0_daw = req->win0.dst_act_w;
+				win0_dah = req->win0.dst_act_h;
+
+				win1_saw = req->win1.src_act_w;
+				win1_sah = req->win1.src_act_h;
+				win1_daw = req->win1.dst_act_w;
+				win1_dah = req->win1.dst_act_h;
+			}
+		} else {
+			win0_saw = req->win0.src_act_w;
+			win0_sah = req->win0.src_act_h;
+			win0_daw = req->win0.dst_act_h;
+			win0_dah = req->win0.dst_act_w;
+		}
+	} else {
+		win0_saw = req->win0.src_act_w;
+		win0_sah = req->win0.src_act_h;
+		win0_daw = req->win0.dst_act_w;
+		win0_dah = req->win0.dst_act_h;
+
+		if (req->win1.yrgb_addr != 0) {
+			win1_saw = req->win1.src_act_w;
+			win1_sah = req->win1.src_act_h;
+			win1_daw = req->win1.dst_act_w;
+			win1_dah = req->win1.dst_act_h;
+		}
+	}
 
 	if (((win0_saw >> 3) > win0_daw) || ((win0_sah >> 3) > win0_dah)) {
-		pr_info("win0 unsupported to scaling less than 1/8 times.\n");
+		pr_info("win0 unsupported to scaling less than 1/8 times. src[%d, %d], dst[%d, %d]\n",
+			win0_saw, win0_sah, win0_daw, win0_dah);
 		return -EINVAL;
 	}
 	if (((win0_daw >> 3) > win0_saw) || ((win0_dah >> 3) > win0_sah)) {
-		pr_info("win0 unsupported to scaling more than 8 times.\n");
+		pr_info("win0 unsupported to scaling more than 8 times. src[%d, %d], dst[%d, %d]\n",
+			win0_saw, win0_sah, win0_daw, win0_dah);
 		return -EINVAL;
 	}
 
 	if (req->win1.yrgb_addr != 0) {
-		win1_saw = req->win1.src_act_w;
-		win1_sah = req->win1.src_act_h;
-		win1_daw = req->win1.dst_act_w;
-		win1_dah = req->win1.dst_act_h;
-
 		if (((win1_saw >> 3) > win1_daw) || ((win1_sah >> 3) > win1_dah)) {
-			pr_info("win1 unsupported to scaling less than 1/8 times.\n");
+			pr_info("win1 unsupported to scaling less than 1/8 times. src[%d, %d], dst[%d, %d]\n",
+				win1_saw, win1_sah, win1_daw, win1_dah);
 			return -EINVAL;
 		}
 		if (((win1_daw >> 3) > win1_saw) || ((win1_dah >> 3) > win1_sah)) {
-			pr_info("win1 unsupported to scaling more than 8 times.\n");
+			pr_info("win1 unsupported to scaling more than 8 times. src[%d, %d], dst[%d, %d]\n",
+				win1_saw, win1_sah, win1_daw, win1_dah);
 			return -EINVAL;
 		}
 	}
@@ -1995,6 +1994,7 @@ static int rga3_init_reg(struct rga_job *job)
 	struct rga3_req req;
 	int ret = 0;
 	struct rga_scheduler_t *scheduler = NULL;
+	ktime_t timestamp = ktime_get();
 
 	scheduler = job->scheduler;
 	if (unlikely(scheduler == NULL)) {
@@ -2023,6 +2023,10 @@ static int rga3_init_reg(struct rga_job *job)
 		pr_err("RKA: gen reg info error\n");
 		return -EINVAL;
 	}
+
+	if (DEBUGGER_EN(TIME))
+		pr_info("request[%d], generate register cost time %lld us\n",
+			job->request_id, ktime_us_delta(ktime_get(), timestamp));
 
 	return ret;
 }
@@ -2110,7 +2114,8 @@ static int rga3_set_reg(struct rga_job *job, struct rga_scheduler_t *scheduler)
 	}
 
 	if (DEBUGGER_EN(TIME))
-		pr_info("set cmd use time = %lld\n", ktime_us_delta(now, job->timestamp));
+		pr_info("request[%d], set register cost time %lld us\n",
+			job->request_id, ktime_us_delta(now, job->timestamp));
 
 	job->hw_running_time = now;
 	job->hw_recoder_time = now;
