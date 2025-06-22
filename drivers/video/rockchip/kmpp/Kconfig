@@ -1,0 +1,10 @@
+# SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+
+config ROCKCHIP_KMPP
+	bool "kmpp"
+	depends on CPU_RV1106
+	select ROCKCHIP_MPP_OSAL
+	select ROCKCHIP_DVBM
+	default y
+	help
+	  rockchip kmpp
