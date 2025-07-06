@@ -158,6 +158,10 @@
     status = "okay";
 };
 
+&npu {
+    status = "disabled";
+};
+
 &vop {
     status = "okay";
 };
