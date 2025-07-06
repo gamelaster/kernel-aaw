@@ -1,0 +1,9 @@
+# SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+
+config ROCKCHIP_ROCKIT
+	bool "rockit"
+	depends on CPU_RV1106
+	select ROCKCHIP_KMPP
+	default y
+	help
+	  rockchip rockit
