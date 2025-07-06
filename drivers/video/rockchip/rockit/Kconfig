@@ -4,6 +4,6 @@ config ROCKCHIP_ROCKIT
 	bool "rockit"
 	depends on CPU_RV1106
 	select ROCKCHIP_KMPP
-	default y
+	default n
 	help
 	  rockchip rockit
