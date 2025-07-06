@@ -16,3 +16,6 @@ EXPORT_SYMBOL_GPL(rk_tb_client_register_cb);
 
 int rk_tb_client_register_cb_head(struct rk_tb_client *client) { return 0; }
 EXPORT_SYMBOL_GPL(rk_tb_client_register_cb_head);
+
+u32 get_rk_cam_h(void) { return 0; }
+EXPORT_SYMBOL_GPL(get_rk_cam_h);
