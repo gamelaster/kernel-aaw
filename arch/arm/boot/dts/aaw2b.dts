@@ -305,3 +305,7 @@
 &rkisp {
     status = "okay";
 };
+
+&rgb_in_vop {
+    status = "okay";
+};
