@@ -289,3 +289,19 @@
     pinctrl-names = "default";
     pinctrl-0 = <&i2c0m2_xfer>;
 };
+
+&display_subsystem {
+    status = "okay";
+};
+
+&vop {
+    status = "okay";
+};
+
+&rgb {
+    status = "okay";
+};
+
+&rkisp {
+    status = "okay";
+};
