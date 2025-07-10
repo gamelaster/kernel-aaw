@@ -154,22 +154,6 @@
     status = "okay";
 };
 
-&display_subsystem {
-    status = "okay";
-};
-
-&vop {
-    status = "okay";
-};
-
-&rgb {
-    status = "okay";
-};
-
-&rkisp {
-    status = "okay";
-};
-
 &rng {
     status = "okay";
 };
