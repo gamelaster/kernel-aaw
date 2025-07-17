@@ -60,6 +60,15 @@ allowed_warnings = set([
     "sched.h:1211", # include/linux/sched.h:1211:1: warning: type qualifiers ignored on function return type
     "halphyrf_8188e_ce.c:2208", # drivers/net/wireless/rockchip_wlan/rtl8189es/hal/phydm/rtl8188e/halphyrf_8188e_ce.c:2208:1: warning: the frame size of 1056 bytes is larger than 1024 bytes
     "halphyrf_8723b_ce.c:2879", # drivers/net/wireless/rockchip_wlan/rtl8723bu/hal/phydm/rtl8723b/halphyrf_8723b_ce.c:2879:1: warning: the frame size of 1056 bytes is larger than 1024 bytes
+    "rtw_sta_mgt.c:394", # drivers/net/wireless/rockchip_wlan/rtl8733bs/core/rtw_sta_mgt.c:394:25: warning: the comparison will always evaluate as 'true' for the address of 'lock' will never be NULL [-Waddress]
+    "phydm_ccx.c:3027", # drivers/net/wireless/rockchip_wlan/rtl8733bs/hal/phydm/phydm_ccx.c:3027:21: warning: the comparison will always evaluate as 'true' for the pointer operand in 'input + ((sizetype)i + 1) * 16' must not be NULL [-Waddress]
+    "phydm_ccx.c:3639", # drivers/net/wireless/rockchip_wlan/rtl8733bs/hal/phydm/phydm_ccx.c:3639:21: warning: the comparison will always evaluate as 'true' for the pointer operand in 'input + ((sizetype)i + 1) * 16' must not be NULL [-Waddress]
+    "halrf.c:4672", # drivers/net/wireless/rockchip_wlan/rtl8733bs/hal/phydm/halrf/halrf.c:4672:13: warning: the comparison will always evaluate as 'true' for the pointer operand in 'input + 32' must not be NULL [-Waddress]
+    "phydm_pmac_tx_setting.c:496", # drivers/net/wireless/rockchip_wlan/rtl8733bs/hal/phydm/phydm_pmac_tx_setting.c:496:29: warning: the comparison will always evaluate as 'true' for the pointer operand in 'input + ((sizetype)i + 1) * 16' must not be NULL [-Waddress]
+    "halrf_debug.c:332", # drivers/net/wireless/rockchip_wlan/rtl8733bs/hal/phydm/halrf/halrf_debug.c:332:29: warning: the comparison will always evaluate as 'true' for the pointer operand in 'input + ((sizetype)i + 1) * 16' must not be NULL [-Waddress]
+    "halrf.c:868", # drivers/net/wireless/rockchip_wlan/rtl8733bs/hal/phydm/halrf/halrf.c:868:21: warning: the comparison will always evaluate as 'true' for the pointer operand in 'input + ((sizetype)i + 1) * 16' must not be NULL [-Waddress]
+    "halrf_debug.c:154", # drivers/net/wireless/rockchip_wlan/rtl8733bs/hal/phydm/halrf/halrf_debug.c:154:21: warning: the comparison will always evaluate as 'true' for the pointer operand in 'input + ((sizetype)i + 1) * 16' must not be NULL [-Waddress]
+    "halrf_debug.c:214", # drivers/net/wireless/rockchip_wlan/rtl8733bs/hal/phydm/halrf/halrf_debug.c:214:21: warning: the comparison will always evaluate as 'true' for the pointer operand in 'input + ((sizetype)i + 1) * 16' must not be NULL [-Waddress]
  ])
 
 # Capture the name of the object file, can find it.
